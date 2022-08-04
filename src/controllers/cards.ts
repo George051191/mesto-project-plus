@@ -1,13 +1,13 @@
-/* eslint-disable no-unused-vars */
-import { Request, Response, NextFunction } from 'express';
+import { Request, Response } from 'express';
+import { ObjectId } from 'mongodb';
 import SessionRequest from '../utils/interfaces';
 import Card from '../models/card';
 
-const getCard = (req: Request, res: Response, next: NextFunction) => Card.find({})
+const getCard = (req: Request, res: Response) => Card.find({}).populate('owner')
   .then((cards) => res.send({ data: cards }))
   .catch((err) => res?.status(err.status || 500).send({ message: 'Произошла ошибка' }));
 
-const createCard = (req: SessionRequest, res: Response, next: NextFunction) => {
+const createCard = (req: SessionRequest, res: Response) => {
   const { name, link, owner } = req.body;
   Card.create({ name, link, owner })
     .then((card) => res.send({ data: card }))
@@ -19,7 +19,7 @@ const createCard = (req: SessionRequest, res: Response, next: NextFunction) => {
     });
 };
 
-const deleteCard = (req: SessionRequest, res: Response, next: NextFunction) => {
+const deleteCard = (req: SessionRequest, res: Response) => {
   const { cardId } = req.params;
   Card.findByIdAndRemove(cardId)
     .then((card) => res.send(card))
@@ -31,4 +31,47 @@ const deleteCard = (req: SessionRequest, res: Response, next: NextFunction) => {
     });
 };
 
-export { getCard, createCard, deleteCard };
+const likeCard = (req: SessionRequest, res: Response) => {
+  const id = req.user?._id;
+  Card.findByIdAndUpdate(
+    req.params.cardId,
+    { $addToSet: { likes: id } },
+    { new: true, runValidators: true },
+  )
+    .then((card) => res.send({ data: card }))
+    .catch((err) => {
+      switch (err.name) {
+        case 'ValidationError':
+          res.status(400).send({ message: 'Переданы некорректные данные' });
+          break;
+        case 'CastError':
+          res.status(404).send({ message: 'Запрашиваемая карточка не найдена' });
+          break;
+        default: res.status(err.status || 500).send({ message: err.message });
+      }
+    });
+};
+
+const dislikeCard = (req: SessionRequest, res: Response) => {
+  Card.findByIdAndUpdate(
+    req.params.cardId,
+    { $pull: { likes: req.user?._id! } },
+    { new: true, runValidators: true },
+  )
+    .then((card) => res.send({ data: card }))
+    .catch((err) => {
+      switch (err.name) {
+        case 'ValidationError':
+          res.status(400).send({ message: 'Переданы некорректные данные' });
+          break;
+        case 'CastError':
+          res.status(404).send({ message: 'Запрашиваемая карточка не найдена' });
+          break;
+        default: res.status(err.status || 500).send({ message: err.message });
+      }
+    });
+};
+
+export {
+  getCard, createCard, deleteCard, likeCard, dislikeCard,
+};

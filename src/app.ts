@@ -3,6 +3,7 @@ import mongoose from 'mongoose';
 import usersRouter from './routes/users';
 import cardRouter from './routes/cards';
 import SessionRequest from './utils/interfaces';
+import authUserRouter from './routes/authuser';
 
 const { PORT = 3000 } = process.env;
 
@@ -13,6 +14,7 @@ app.use(express.urlencoded({ extended: true }));
 
 mongoose.connect('mongodb://localhost:27017/mestodb');
 app.use('/', usersRouter);
+
 app.use((req:SessionRequest, res:Response, next:NextFunction) => {
   req.user = {
     _id: '62e959b092d6dc361f6d49eb',
@@ -22,6 +24,7 @@ app.use((req:SessionRequest, res:Response, next:NextFunction) => {
 });
 
 app.use('/cards', cardRouter);
+app.use('/users', authUserRouter);
 
 app.listen(PORT, () => {
   console.log('We are now on PORT 3000');
