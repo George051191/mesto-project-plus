@@ -1,7 +1,11 @@
 import { Request, Response } from 'express';
-import { ObjectId } from 'mongodb';
+import { ObjectId } from 'mongoose';
 import SessionRequest from '../utils/interfaces';
 import Card from '../models/card';
+
+interface TempRequest extends Request {
+  user?: {_id: ObjectId}
+}
 
 const getCard = (req: Request, res: Response) => Card.find({}).populate('owner')
   .then((cards) => res.send({ data: cards }))
@@ -52,7 +56,7 @@ const likeCard = (req: SessionRequest, res: Response) => {
     });
 };
 
-const dislikeCard = (req: SessionRequest, res: Response) => {
+const dislikeCard = (req: TempRequest, res: Response) => {
   Card.findByIdAndUpdate(
     req.params.cardId,
     { $pull: { likes: req.user?._id! } },
