@@ -1,6 +1,6 @@
-import express, { Response, NextFunction } from 'express';
+import express, { Response, NextFunction, Request } from 'express';
 import mongoose from 'mongoose';
-
+import { DEFAULT_ERROR } from './errors/errors_status';
 import usersRouter from './routes/users';
 import cardRouter from './routes/cards';
 import SessionRequest from './utils/interfaces';
@@ -26,6 +26,23 @@ app.use((req:SessionRequest, res:Response, next:NextFunction) => {
 
 app.use('/cards', cardRouter);
 app.use('/users', authUserRouter);
+
+app.use((
+  err: any,
+  req: Request,
+  res: Response,
+  // eslint-disable-next-line no-unused-vars
+  next: NextFunction,
+) => {
+  const { statusCode = DEFAULT_ERROR, message } = err;
+  res
+    .status(statusCode)
+    .send({
+      message: statusCode === DEFAULT_ERROR
+        ? 'На сервере произошла ошибка'
+        : message,
+    });
+});
 
 app.listen(PORT, () => {
   console.log('We are now on PORT 3000');

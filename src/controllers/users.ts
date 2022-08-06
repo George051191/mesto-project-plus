@@ -1,65 +1,89 @@
-import { Request, Response } from 'express';
+import { Request, Response, NextFunction } from 'express';
 import User from '../models/user';
 import SessionRequest from '../utils/interfaces';
+import BadRequestError from '../errors/bad_request';
+import NotFoundError from '../errors/not-found';
 
-const getAllUsers = (req: Request, res: Response) => User.find({})
+const getAllUsers = (req: Request, res: Response, next: NextFunction) => User.find({})
   .then((users) => res?.send({ data: users }))
-  .catch((err) => res?.status(err.status || 500).send({ message: 'Произошла ошибка' }));
+  .catch(next);
 
-const getUserById = (req: Request, res: Response) => User.findById(req.params.id)
-  .then((user) => res.send({ data: user }))
-  .catch((err) => {
-    if (err.name === 'CastError') {
-      return res.status(404).send({ message: 'Запрашиваемый пользователь не найден' });
+const getUserById = (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => User.findById(req.params.id)
+  .then((user) => {
+    if (user === null) {
+      next(new NotFoundError('Пользователь не найден'));
     }
-    return res.status(500).send({ message: 'Неизвестная ошибка' });
+    res.send({ data: user });
+  })
+  .catch((err) => {
+    switch (err.name) {
+      case 'CastError':
+        next(new NotFoundError('Пользователь не найден'));
+        break;
+      default: next(err);
+    }
   });
 
-const createUser = (req: Request, res: Response) => {
+const createUser = (req: Request, res: Response, next: NextFunction) => {
   const { name, about, avatar } = req.body;
   User.create({ name, about, avatar })
     .then((user) => res.send({ data: user }))
     .catch((err) => {
-      if (err.name === 'ValidationError') {
-        return res.status(400).send({ message: 'Переданы некорректные данные' });
+      switch (err.name) {
+        case 'ValidationError':
+          next(new BadRequestError('Переданы некорректные данные'));
+          break;
+        default: next(err);
       }
-
-      return res.status(500).send({ message: 'Неизвестная ошибка' });
     });
 };
 
-const editUserInfo = (req: SessionRequest, res: Response) => {
+const editUserInfo = (req: SessionRequest, res: Response, next:NextFunction) => {
   const id = req.user?._id;
   const { name, about } = req.body;
   User.findByIdAndUpdate(id, { name, about }, { new: true, runValidators: true })
-    .then((user) => res.send({ data: user }))
+    .then((user) => {
+      if (user === null) {
+        next(new NotFoundError('Пользователь не найден'));
+      }
+      res.send({ data: user });
+    })
     .catch((err) => {
       switch (err.name) {
         case 'ValidationError':
-          res.status(400).send({ message: 'Переданы некорректные данные' });
+          next(new BadRequestError('Переданы некорректные данные'));
           break;
         case 'CastError':
-          res.status(404).send({ message: 'Запрашиваемый пользователь не найден' });
+          next(new NotFoundError('Пользователь не найден'));
           break;
-        default: res.status(err.status || 500).send({ message: err.message });
+        default: next(err);
       }
     });
 };
 
-const refreshAvatar = (req: SessionRequest, res: Response) => {
+const refreshAvatar = (req: SessionRequest, res: Response, next: NextFunction) => {
   const id = req.user?._id;
   const { avatar } = req.body;
   User.findByIdAndUpdate(id, { avatar }, { new: true, runValidators: true })
-    .then((user) => res.send({ data: user }))
+    .then((user) => {
+      if (user === null) {
+        next(new NotFoundError('Пользователь не найден'));
+      }
+      res.send({ data: user });
+    })
     .catch((err) => {
       switch (err.name) {
         case 'ValidationError':
-          res.status(400).send({ message: 'Переданы некорректные данные' });
+          next(new BadRequestError('Переданы некорректные данные'));
           break;
         case 'CastError':
-          res.status(404).send({ message: 'Запрашиваемый пользователь не найден' });
+          next(new NotFoundError('Пользователь не найден'));
           break;
-        default: res.status(err.status || 500).send({ message: err.message });
+        default: next(err);
       }
     });
 };

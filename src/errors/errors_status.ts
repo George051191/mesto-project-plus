@@ -1,0 +1,5 @@
+const NOT_FOUND = 404;
+const BAD_REQUEST = 400;
+const DEFAULT_ERROR = 500;
+
+export { NOT_FOUND, BAD_REQUEST, DEFAULT_ERROR };
