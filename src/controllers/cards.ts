@@ -39,6 +39,7 @@ const deleteCard = (req: SessionRequest, res: Response, next: NextFunction) => {
     .then((card) => {
       if (card === null) {
         next(new NotFoundError('Карточка не найдена'));
+        return;
       }
       res.send(card);
     })
@@ -62,6 +63,7 @@ const likeCard = (req: SessionRequest, res: Response, next:NextFunction) => {
     .then((card) => {
       if (card === null) {
         next(new NotFoundError('Карточка не найдена'));
+        return;
       }
       res.send({ data: card });
     })

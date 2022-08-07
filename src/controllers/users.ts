@@ -16,6 +16,7 @@ const getUserById = (
   .then((user) => {
     if (user === null) {
       next(new NotFoundError('Пользователь не найден'));
+      return;
     }
     res.send({ data: user });
   })
@@ -49,6 +50,7 @@ const editUserInfo = (req: SessionRequest, res: Response, next:NextFunction) => 
     .then((user) => {
       if (user === null) {
         next(new NotFoundError('Пользователь не найден'));
+        return;
       }
       res.send({ data: user });
     })
@@ -72,6 +74,7 @@ const refreshAvatar = (req: SessionRequest, res: Response, next: NextFunction) =
     .then((user) => {
       if (user === null) {
         next(new NotFoundError('Пользователь не найден'));
+        return;
       }
       res.send({ data: user });
     })
