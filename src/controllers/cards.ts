@@ -35,21 +35,25 @@ const createCard = (req: SessionRequest, res: Response, next: NextFunction) => {
 
 const deleteCard = (req: SessionRequest, res: Response, next: NextFunction) => {
   const { cardId } = req.params;
-  Card.findByIdAndRemove(cardId)
+  const id = req.user?._id;
+  Card.findById(cardId)
     .then((card) => {
       if (card === null) {
-        next(new NotFoundError('Карточка не найдена'));
-        return;
+        return next(new NotFoundError('Карточка не найдена'));
       }
-      res.send(card);
-    })
-    .catch((err) => {
-      switch (err.name) {
-        case 'CastError':
-          next(new NotFoundError('Карточка не найдена'));
-          break;
-        default: next(err);
+      if (id !== card.owner.toString()) {
+        return next(new BadRequestError('Переданы некорректные данные'));
       }
+      return Card.deleteOne({ _id: cardId })
+        .then(() => res.send(card))
+        .catch((err) => {
+          switch (err.name) {
+            case 'CastError':
+              next(new NotFoundError('Карточка не найдена'));
+              break;
+            default: next(err);
+          }
+        });
     });
 };
 

@@ -1,10 +1,12 @@
 import { Request, Response, NextFunction } from 'express';
+import bcrypt from 'bcryptjs';
+import jwt from 'jsonwebtoken';
 import User from '../models/user';
 import SessionRequest from '../utils/interfaces';
 import BadRequestError from '../errors/bad_request';
 import NotFoundError from '../errors/not-found';
 
-const getAllUsers = (req: Request, res: Response, next: NextFunction) => User.find({})
+const getAllUsers = (req: SessionRequest, res: Response, next: NextFunction) => User.find({})
   .then((users) => res?.send({ data: users }))
   .catch(next);
 
@@ -29,10 +31,32 @@ const getUserById = (
     }
   });
 
-const createUser = (req: Request, res: Response, next: NextFunction) => {
-  const { name, about, avatar } = req.body;
-  User.create({ name, about, avatar })
+const getCurrentUser = (req: SessionRequest, res: Response, next: NextFunction) => {
+  const id = req.user?._id;
+
+  User.findById(id)
     .then((user) => res.send({ data: user }))
+    .catch(next);
+};
+
+const createUser = (req: Request, res: Response, next: NextFunction) => {
+  const {
+    name, about, avatar, email, password,
+  } = req.body;
+
+  bcrypt.hash(password, 10)
+    .then((hash: string) => User.create({
+      name, about, avatar, email, password: hash,
+    }))
+    .then((user) => res.send({
+      data: {
+        name: user.name,
+        avatar: user.avatar,
+        about: user.about,
+        email: user.email,
+        _id: user._id,
+      },
+    }))
     .catch((err) => {
       switch (err.name) {
         case 'ValidationError':
@@ -41,6 +65,18 @@ const createUser = (req: Request, res: Response, next: NextFunction) => {
         default: next(err);
       }
     });
+};
+
+const login = (req: Request, res: Response, next: NextFunction) => {
+  const { email, password } = req.body;
+
+  User.findUserByCredentials(email, password)
+    .then((user) => {
+      res.send({
+        token: jwt.sign({ _id: user._id }, 'super-strong-secret', { expiresIn: '7d' }),
+      });
+    })
+    .catch(next);
 };
 
 const editUserInfo = (req: SessionRequest, res: Response, next:NextFunction) => {
@@ -92,5 +128,5 @@ const refreshAvatar = (req: SessionRequest, res: Response, next: NextFunction) =
 };
 
 export {
-  getAllUsers, getUserById, createUser, editUserInfo, refreshAvatar,
+  getAllUsers, getUserById, createUser, editUserInfo, refreshAvatar, login, getCurrentUser,
 };

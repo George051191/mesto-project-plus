@@ -1,10 +1,12 @@
 import express, { Response, NextFunction, Request } from 'express';
 import mongoose from 'mongoose';
+import { requestLogger, errorLogger } from './middlewares/logger';
 import { DEFAULT_ERROR } from './errors/errors_status';
 import usersRouter from './routes/users';
 import cardRouter from './routes/cards';
-import SessionRequest from './utils/interfaces';
 import authUserRouter from './routes/authuser';
+import { login, createUser } from './controllers/users';
+import auth from './middlewares/auth';
 
 const { PORT = 3000 } = process.env;
 
@@ -14,19 +16,16 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 mongoose.connect('mongodb://localhost:27017/mestodb');
-app.use('/', usersRouter);
+app.use(requestLogger);
+app.post('/signin', login);
+app.post('/signup', createUser);
 
-app.use((req:SessionRequest, res:Response, next:NextFunction) => {
-  req.user = {
-    _id: '62e959b092d6dc361f6d49eb',
-  };
-
-  next();
-});
-
-app.use('/cards', cardRouter);
+app.use(auth);
 app.use('/users', authUserRouter);
+app.use('/', usersRouter);
+app.use('/cards', cardRouter);
 
+app.use(errorLogger);
 app.use((
   err: any,
   req: Request,
