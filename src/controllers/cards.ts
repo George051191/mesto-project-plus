@@ -4,6 +4,7 @@ import SessionRequest from '../utils/interfaces';
 import Card from '../models/card';
 import BadRequestError from '../errors/bad_request';
 import NotFoundError from '../errors/not-found';
+import ForbiddenError from '../errors/forbidden_error';
 
 interface TempRequest extends Request {
   user?: {_id: ObjectId}
@@ -42,7 +43,7 @@ const deleteCard = (req: SessionRequest, res: Response, next: NextFunction) => {
         return next(new NotFoundError('Карточка не найдена'));
       }
       if (id !== card.owner.toString()) {
-        return next(new BadRequestError('Переданы некорректные данные'));
+        return next(new ForbiddenError('Неверные права доступа к файлам'));
       }
       return Card.deleteOne({ _id: cardId })
         .then(() => res.send(card))

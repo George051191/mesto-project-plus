@@ -5,6 +5,7 @@ import User from '../models/user';
 import SessionRequest from '../utils/interfaces';
 import BadRequestError from '../errors/bad_request';
 import NotFoundError from '../errors/not-found';
+import ConflictError from '../errors/conflict_error';
 
 const getAllUsers = (req: SessionRequest, res: Response, next: NextFunction) => User.find({})
   .then((users) => res?.send({ data: users }))
@@ -43,7 +44,7 @@ const createUser = (req: Request, res: Response, next: NextFunction) => {
   const {
     name, about, avatar, email, password,
   } = req.body;
-
+  const { JWT_SECRET } = process.env;
   bcrypt.hash(password, 10)
     .then((hash: string) => User.create({
       name, about, avatar, email, password: hash,
@@ -55,12 +56,16 @@ const createUser = (req: Request, res: Response, next: NextFunction) => {
         about: user.about,
         email: user.email,
         _id: user._id,
+        token: jwt.sign({ _id: user._id }, `${JWT_SECRET}`, { expiresIn: '7d' }),
       },
     }))
     .catch((err) => {
       switch (err.name) {
         case 'ValidationError':
           next(new BadRequestError('Переданы некорректные данные'));
+          break;
+        case 'MongoServerError':
+          next(new ConflictError('Пользователь с такой почтой уже существует'));
           break;
         default: next(err);
       }
@@ -69,11 +74,11 @@ const createUser = (req: Request, res: Response, next: NextFunction) => {
 
 const login = (req: Request, res: Response, next: NextFunction) => {
   const { email, password } = req.body;
-
+  const { JWT_SECRET } = process.env;
   User.findUserByCredentials(email, password)
     .then((user) => {
       res.send({
-        token: jwt.sign({ _id: user._id }, 'super-strong-secret', { expiresIn: '7d' }),
+        token: jwt.sign({ _id: user._id }, `${JWT_SECRET}`, { expiresIn: '7d' }),
       });
     })
     .catch(next);

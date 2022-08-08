@@ -39,6 +39,7 @@ const userShema = new Schema<IUser>({
   email: {
     type: String,
     required: true,
+    index: true,
     unique: true,
     validate: {
       validator(v: string) {
@@ -53,6 +54,8 @@ const userShema = new Schema<IUser>({
     required: true,
   },
 });
+
+userShema.index({ email: 1 }, { unique: true });
 
 userShema.static('findUserByCredentials', function findUserByCredentials(email: string, password: string) {
   return this.findOne({ email }).select('+password').then((user: IUser) => {

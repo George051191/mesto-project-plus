@@ -1,3 +1,4 @@
+import * as dotenv from 'dotenv';
 import express, { Response, NextFunction, Request } from 'express';
 import mongoose from 'mongoose';
 import { requestLogger, errorLogger } from './middlewares/logger';
@@ -8,6 +9,7 @@ import authUserRouter from './routes/authuser';
 import { login, createUser } from './controllers/users';
 import auth from './middlewares/auth';
 
+dotenv.config();
 const { PORT = 3000 } = process.env;
 
 const app = express();

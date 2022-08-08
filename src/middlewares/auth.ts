@@ -14,11 +14,11 @@ export default (req: SessionRequest, res: Response, next: NextFunction) => {
   }
 
   const token = authorization.replace('Bearer ', '');
-
+  const { JWT_SECRET } = process.env;
   let payload;
 
   try {
-    payload = jwt.verify(token, 'super-strong-secret');
+    payload = jwt.verify(token, `${JWT_SECRET}`);
   } catch (err) {
     return next(new AuthError('Требуется авторизация'));
   }
