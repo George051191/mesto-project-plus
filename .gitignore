@@ -17,4 +17,4 @@ node_modules
 # Typescript build result
 dist
 
-*.env
+.env
