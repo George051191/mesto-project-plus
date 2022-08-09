@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import { ObjectId } from 'mongoose';
+import escape from 'escape-html';
 import SessionRequest from '../utils/interfaces';
 import Card from '../models/card';
 import BadRequestError from '../errors/bad_request';
@@ -21,13 +22,14 @@ const getCard = async (req: Request, res: Response, next: NextFunction) => {
 
 const createCard = (req: SessionRequest, res: Response, next: NextFunction) => {
   const { name, link, owner } = req.body;
-
-  Card.create({ name, link, owner })
+  const shieldName = escape(name);
+  Card.create({ name: shieldName, link, owner })
     .then((card) => res.send({ data: card }))
     .catch((err) => {
+      console.log(err);
       switch (err.name) {
         case 'ValidationError':
-          next(new BadRequestError('Переданы некорректные данные'));
+          next(new BadRequestError(err.errors.link ? err.errors.link.message : 'Переданы некорректные данные'));
           break;
         default: next(err);
       }

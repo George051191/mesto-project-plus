@@ -1,6 +1,7 @@
 import * as dotenv from 'dotenv';
 import express, { Response, NextFunction, Request } from 'express';
 import mongoose from 'mongoose';
+import { errors } from 'celebrate';
 import { requestLogger, errorLogger } from './middlewares/logger';
 import { DEFAULT_ERROR } from './errors/errors_status';
 import usersRouter from './routes/users';
@@ -26,7 +27,7 @@ app.use(auth);
 app.use('/users', authUserRouter);
 app.use('/', usersRouter);
 app.use('/cards', cardRouter);
-
+app.use(errors());
 app.use(errorLogger);
 app.use((
   err: any,

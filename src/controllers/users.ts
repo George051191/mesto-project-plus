@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import bcrypt from 'bcryptjs';
+import escape from 'escape-html';
 import jwt from 'jsonwebtoken';
 import User from '../models/user';
 import SessionRequest from '../utils/interfaces';
@@ -44,10 +45,12 @@ const createUser = (req: Request, res: Response, next: NextFunction) => {
   const {
     name, about, avatar, email, password,
   } = req.body;
+  const shieldName = escape(name);
+  const shieldAbout = escape(about);
   const { JWT_SECRET } = process.env;
   bcrypt.hash(password, 10)
     .then((hash: string) => User.create({
-      name, about, avatar, email, password: hash,
+      name: shieldName, about: shieldAbout, avatar, email, password: hash,
     }))
     .then((user) => res.send({
       data: {
@@ -62,7 +65,10 @@ const createUser = (req: Request, res: Response, next: NextFunction) => {
     .catch((err) => {
       switch (err.name) {
         case 'ValidationError':
-          next(new BadRequestError('Переданы некорректные данные'));
+          // eslint-disable-next-line no-case-declarations
+          const errorMessage = err.errors.avatar ? err.errors.avatar.message
+            : err.errors.email.message;
+          next(new BadRequestError(err.errors ? errorMessage : 'Переданы некорректные данные'));
           break;
         case 'MongoServerError':
           next(new ConflictError('Пользователь с такой почтой уже существует'));
@@ -84,7 +90,7 @@ const login = (req: Request, res: Response, next: NextFunction) => {
     .catch(next);
 };
 
-const editUserInfo = (req: SessionRequest, res: Response, next:NextFunction) => {
+const editUserInfo = (req: SessionRequest, res: Response, next: NextFunction) => {
   const id = req.user?._id;
   const { name, about } = req.body;
   User.findByIdAndUpdate(id, { name, about }, { new: true, runValidators: true })
