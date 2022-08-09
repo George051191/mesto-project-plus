@@ -1,8 +1,18 @@
 import { Router } from 'express';
+import mongoose from 'mongoose';
 import { celebrate, Joi } from 'celebrate';
+import NotFoundError from '../errors/not-found';
 import {
   getCard, createCard, deleteCard, likeCard, dislikeCard,
 } from '../controllers/cards';
+
+// eslint-disable-next-line no-unused-vars
+const idValidation = (value: string, helpers?: object) => {
+  if (!mongoose.isObjectIdOrHexString(value)) {
+    throw new NotFoundError('Карточка не найдена');
+  }
+  return value;
+};
 
 const router = Router();
 
@@ -25,7 +35,7 @@ router.post('/', celebrate({
 
 router.delete('/:cardId', celebrate({
   params: Joi.object().keys({
-    cardId: Joi.string().required(),
+    cardId: Joi.string().required().custom(idValidation, 'custom validation'),
   }),
   headers: Joi.object().keys({
     authorization: Joi.string().required(),
@@ -34,7 +44,7 @@ router.delete('/:cardId', celebrate({
 
 router.put('/:cardId/likes', celebrate({
   params: Joi.object().keys({
-    cardId: Joi.string().required(),
+    cardId: Joi.string().required().custom(idValidation, 'custom validation'),
   }),
   headers: Joi.object().keys({
     authorization: Joi.string().required(),
@@ -43,7 +53,7 @@ router.put('/:cardId/likes', celebrate({
 
 router.delete('/:cardId/likes', celebrate({
   params: Joi.object().keys({
-    cardId: Joi.string().required(),
+    cardId: Joi.string().required().custom(idValidation, 'custom validation'),
   }),
   headers: Joi.object().keys({
     authorization: Joi.string().required(),

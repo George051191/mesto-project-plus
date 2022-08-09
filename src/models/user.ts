@@ -66,7 +66,7 @@ userShema.index({ email: 1 }, { unique: true });
 userShema.static('findUserByCredentials', function findUserByCredentials(email: string, password: string) {
   return this.findOne({ email }).select('+password').then((user: IUser) => {
     if (!user) {
-      throw new NotFoundError('Пользователь не найден');
+      throw new AuthError('Неправильные почта или пароль');
     }
 
     return bcrypt.compare(password, user.password).then((matched) => {

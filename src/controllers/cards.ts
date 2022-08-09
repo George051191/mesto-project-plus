@@ -26,7 +26,6 @@ const createCard = (req: SessionRequest, res: Response, next: NextFunction) => {
   Card.create({ name: shieldName, link, owner })
     .then((card) => res.send({ data: card }))
     .catch((err) => {
-      console.log(err);
       switch (err.name) {
         case 'ValidationError':
           next(new BadRequestError(err.errors.link ? err.errors.link.message : 'Переданы некорректные данные'));
@@ -57,7 +56,8 @@ const deleteCard = (req: SessionRequest, res: Response, next: NextFunction) => {
             default: next(err);
           }
         });
-    });
+    })
+    .catch(next);
 };
 
 const likeCard = (req: SessionRequest, res: Response, next:NextFunction) => {
