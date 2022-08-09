@@ -1,18 +1,9 @@
 import { Router } from 'express';
-import mongoose from 'mongoose';
 import { celebrate, Joi } from 'celebrate';
-import NotFoundError from '../errors/not-found';
+import idValidation from '../utils/validation';
 import {
   getCard, createCard, deleteCard, likeCard, dislikeCard,
 } from '../controllers/cards';
-
-// eslint-disable-next-line no-unused-vars
-const idValidation = (value: string, helpers?: object) => {
-  if (!mongoose.isObjectIdOrHexString(value)) {
-    throw new NotFoundError('Карточка не найдена');
-  }
-  return value;
-};
 
 const router = Router();
 

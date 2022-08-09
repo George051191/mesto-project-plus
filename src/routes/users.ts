@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { celebrate, Joi } from 'celebrate';
+import idValidation from '../utils/validation';
 import {
   getAllUsers, getUserById,
 } from '../controllers/users';
@@ -14,7 +15,7 @@ router.get('/users', celebrate({
 
 router.get('/users/:id', celebrate({
   params: Joi.object().keys({
-    id: Joi.string().required(),
+    id: Joi.string().required().custom(idValidation, 'custom validation'),
   }),
   headers: Joi.object().keys({
     authorization: Joi.string().required(),

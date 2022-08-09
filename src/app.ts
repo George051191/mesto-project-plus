@@ -9,6 +9,11 @@ import cardRouter from './routes/cards';
 import authUserRouter from './routes/authuser';
 import { login, createUser } from './controllers/users';
 import auth from './middlewares/auth';
+import NotFoundError from './errors/not-found';
+import BadRequestError from './errors/bad_request';
+import AuthError from './errors/auth_error';
+import ConflictError from './errors/conflict_error';
+import ForbiddenError from './errors/forbidden_error';
 
 dotenv.config();
 const { PORT = 3000 } = process.env;
@@ -27,10 +32,12 @@ app.use(auth);
 app.use('/users', authUserRouter);
 app.use('/', usersRouter);
 app.use('/cards', cardRouter);
-app.use(errors());
+
 app.use(errorLogger);
+app.use(errors());
+
 app.use((
-  err: any,
+  err: NotFoundError | BadRequestError | AuthError | ConflictError | ForbiddenError,
   req: Request,
   res: Response,
   // eslint-disable-next-line no-unused-vars
