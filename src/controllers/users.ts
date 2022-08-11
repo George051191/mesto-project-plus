@@ -45,8 +45,8 @@ const createUser = (req: Request, res: Response, next: NextFunction) => {
   const {
     name, about, avatar, email, password,
   } = req.body;
-  const shieldName = escape(name);
-  const shieldAbout = escape(about);
+  const shieldName = name !== undefined ? escape(name) : name;
+  const shieldAbout = about !== undefined ? escape(about) : about;
   const { JWT_SECRET } = process.env;
   bcrypt.hash(password, 10)
     .then((hash: string) => User.create({
